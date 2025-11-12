@@ -40,21 +40,21 @@ const pageComponents: { [key: string]: React.FC<any> } = {
   dashboard: DashboardView,
   form: FormView,
   reports: ReportsView,
-  receiving: ReceivingPage,
+  // receiving: ReceivingPage,
 };
 
 const pageIcons: { [key: string]: React.ElementType } = {
   dashboard: LayoutDashboard,
   form: FilePlus,
   reports: BarChart3,
-  receiving: Archive,
+  // receiving: Archive,
 };
 
 const pageLabels: { [key: string]: string } = {
   dashboard: 'Dashboard',
   form: 'Add Entry',
   reports: 'Reports',
-  receiving: 'Receiving',
+  // receiving: 'Receiving',
 };
 
 

@@ -243,9 +243,6 @@ function DashboardView({ currentUser }: { currentUser: AppUser }) {
     modes: [],
   });
 
-  const [receivingTransactions, setReceivingTransactions] = useState<
-    Transaction[]
-  >([]);
 
   useEffect(() => {
     const fetchSheetData = async () => {
@@ -256,16 +253,11 @@ function DashboardView({ currentUser }: { currentUser: AppUser }) {
         "https://script.google.com/macros/s/AKfycbwJn_U3Js50o2YdBN9DFaErLYXKWEDluUf1JjQJGet7d_TN7-O8ZaRWU3bxnf_nc7jAGw/exec";
 
       try {
-        // const [dataRes, masterRes] = await Promise.all([
-        //   fetch(`${appScriptUrl}?sheet=${DATA_SHEET_NAME}&action=fetch`),
-        //   fetch(`${appScriptUrl}?sheet=${MASTER_SHEET_NAME}&action=fetch`),
-        // ]);
-
-        const [dataRes, masterRes, receivingRes] = await Promise.all([
+        const [dataRes, masterRes] = await Promise.all([
           fetch(`${appScriptUrl}?sheet=${DATA_SHEET_NAME}&action=fetch`),
           fetch(`${appScriptUrl}?sheet=${MASTER_SHEET_NAME}&action=fetch`),
-          fetch(`${appScriptUrl}?sheet=Reciving&action=fetch`), // ADD THIS
         ]);
+
 
         if (!dataRes.ok) throw new Error("Failed to fetch transaction data.");
         const dataJson = await dataRes.json();
@@ -292,28 +284,6 @@ function DashboardView({ currentUser }: { currentUser: AppUser }) {
         );
         setAllTransactions(transactions);
 
-        if (!receivingRes.ok)
-          throw new Error("Failed to fetch Receiving data.");
-        const receivingJson = await receivingRes.json();
-        if (!receivingJson.success || !receivingJson.data)
-          throw new Error("Invalid Receiving data format.");
-
-        const receivingTxns: Transaction[] = receivingJson.data
-          .slice(1)
-          .map((row: any, index: number) => ({
-            id: `recv-${row[0]}-${index}`,
-            date: parseSheetDate(row[1])?.toISOString().split("T")[0] || null,
-            personName: row[2] || "",
-            userId: row[2] || "",
-            incoming: parseFloat(row[3]) || 0, // Column D in Receiving
-            outgoing: 0,
-            mode: row[5] || "",
-            groupHead: "",
-            reason: "",
-          }))
-          .filter((t: any): t is Transaction => t.date);
-
-        setReceivingTransactions(receivingTxns);
 
         if (!masterRes.ok) throw new Error("Failed to fetch Master data.");
         const masterJson = await masterRes.json();
@@ -351,10 +321,10 @@ function DashboardView({ currentUser }: { currentUser: AppUser }) {
   }, []);
 
   const filteredTransactions = useMemo(() => {
-    let userVisibleTransactions = allTransactions;
-    // currentUser.role === "admin"
-    //   ? allTransactions
-    //   : allTransactions.filter((t) => t.personName === currentUser.name);
+    let userVisibleTransactions = 
+    currentUser.role === "admin"
+      ? allTransactions
+      : allTransactions.filter((t) => t.personName === currentUser.name);
 
     return userVisibleTransactions.filter((t) => {
       if (filters.dateFrom && t.date < filters.dateFrom) return false;
@@ -378,27 +348,10 @@ function DashboardView({ currentUser }: { currentUser: AppUser }) {
   //   [filteredTransactions]
   // );
 
-  const totalOutgoing = useMemo(() => {
-    const dataSheetOutgoing = filteredTransactions.reduce(
-      (sum, t) => sum + t.outgoing,
-      0
-    );
-    const receivingSheetIncoming = receivingTransactions.reduce(
-      (sum, t) => sum + t.incoming,
-      0
-    );
-    const dataSheetInvoiceAmount = filteredTransactions.reduce(
-      (sum, t) => sum + t.incoming,
-      0
-    );
-
-    // console.log("dataSheetInvoiceAmount",dataSheetInvoiceAmount);
-    // console.log("dataSheetOutgoing",dataSheetOutgoing);
-
-    return (
-      dataSheetInvoiceAmount - (receivingSheetIncoming + dataSheetOutgoing)
-    );
-  }, [filteredTransactions, receivingTransactions]);
+  const totalOutgoing = useMemo(
+     () => filteredTransactions.reduce((sum, t) => sum + t.outgoing, 0),
+     [filteredTransactions]
+   );
 
   // console.log("totalOutgoing",totalOutgoing);
 

@@ -68,7 +68,7 @@ const SelectItem = (props: React.OptionHTMLAttributes<HTMLOptionElement>) => <op
 // --- GOOGLE SHEET CONSTANTS ---
 const SHEET_ID = "1FQwLNqZMJHttaOQnI6Xna5nghHOgQXyWOUfGLAfsfko";
 const DATA_SHEET_NAME = "Data";
-const MASTER_SHEET_NAME = "Master"; // NEW
+const MASTER_SHEET_NAME = "Master";
 
 function ReportsView({
   currentUser,
