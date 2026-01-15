@@ -25,6 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -361,7 +362,7 @@ const ReceivingForm: React.FC<ReceivingFormProps> = ({ currentUser }) => {
         .toLocaleString("en-GB")
         .replace(/,/g, "");
 
-        console.log("formData.personName",formData.personName)
+      console.log("formData.personName", formData.personName)
       const rowDataArray = [
         formattedTimestamp,
         formData.date,
@@ -565,6 +566,9 @@ const ReceivingForm: React.FC<ReceivingFormProps> = ({ currentUser }) => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Vendor</DialogTitle>
+            <DialogDescription>
+              Enter the name of the new vendor to add it to the dropdown list.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Label htmlFor="newVendorName">Vendor Name</Label>

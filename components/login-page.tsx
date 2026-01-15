@@ -88,21 +88,17 @@ const LoginPage: React.FC<{ onLogin: (user: AppUser) => void }> = ({
         }
 
         const rows = jsonData.data;
-        const allPossiblePages = [
-          "dashboard",
-          "form",
-          "receiving",
-          "reports",
-          "settings",
-          "admin_panel",
-        ];
-        const pageNameMapping = {
-          dashboard: "dashboard",
-          "add entry": "form",
-          form: "form",
-          "receive entry": "receiving",
-          receiving: "receiving",
-          reports: "reports",
+        const allPossiblePages = ["dashboard", "request", "approval", "form", "receiving", "reports", "settings", "admin_panel"];
+        const pageNameMapping: { [key: string]: string } = {
+          'dashboard': 'dashboard',
+          'request': 'request',
+          'approval': 'approval',
+          'received': 'form',
+          'add entry': 'form',
+          'form': 'form',
+          'receive entry': 'receiving',
+          'receiving': 'receiving',
+          'reports': 'reports'
         };
 
         const fetchedUsers: AppUser[] = rows
@@ -112,8 +108,9 @@ const LoginPage: React.FC<{ onLogin: (user: AppUser) => void }> = ({
             const pass = row[2];
             const role = row[3];
             const pagesString = row[4];
+            const userRole = role ? String(role).toLowerCase().trim() : "user";
             let pages: string[] = [];
-            if (pagesString && pagesString.toLowerCase().trim() === "all") {
+            if (userRole === "admin" || (pagesString && pagesString.toLowerCase().trim() === "all")) {
               pages = allPossiblePages;
             } else if (pagesString) {
               pages = pagesString
@@ -128,7 +125,7 @@ const LoginPage: React.FC<{ onLogin: (user: AppUser) => void }> = ({
               id: id ? String(id).trim() : "",
               name: id ? String(id).trim() : "",
               password: pass ? String(pass).trim() : "",
-              role: role || "user",
+              role: userRole as "user" | "admin",
               pages: pages,
             };
           })

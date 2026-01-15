@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button"
 import { FileText, Loader2, PlusCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 
 // --- Interfaces ---
 interface Transaction {
@@ -84,54 +84,54 @@ const FormView: React.FC<FormViewProps> = ({ onAddTransaction, currentUser }) =>
   const [newReason, setNewReason] = useState("")
   const [isAddingReason, setIsAddingReason] = useState(false)
 
- const fetchDropdownOptions = async () => {
-  setIsLoading(true)
-  setError(null)
+  const fetchDropdownOptions = async () => {
+    setIsLoading(true)
+    setError(null)
 
-  const appScriptUrl =
-    "https://script.google.com/macros/s/AKfycbwJn_U3Js50o2YdBN9DFaErLYXKWEDluUf1JjQJGet7d_TN7-O8ZaRWU3bxnf_nc7jAGw/exec"
+    const appScriptUrl =
+      "https://script.google.com/macros/s/AKfycbwJn_U3Js50o2YdBN9DFaErLYXKWEDluUf1JjQJGet7d_TN7-O8ZaRWU3bxnf_nc7jAGw/exec"
 
-  try {
-    const response = await fetch(`${appScriptUrl}?sheet=${PUBLIC_SHEET_MASTER_NAME}&action=fetch`)
-    if (!response.ok)
-      throw new Error(`Failed to fetch dropdown data: ${response.status} - ${response.statusText}`)
+    try {
+      const response = await fetch(`${appScriptUrl}?sheet=${PUBLIC_SHEET_MASTER_NAME}&action=fetch`)
+      if (!response.ok)
+        throw new Error(`Failed to fetch dropdown data: ${response.status} - ${response.statusText}`)
 
-    const jsonData = await response.json()
-    if (!jsonData.success || !jsonData.data)
-      throw new Error("Dropdown data is not in the expected format.")
+      const jsonData = await response.json()
+      if (!jsonData.success || !jsonData.data)
+        throw new Error("Dropdown data is not in the expected format.")
 
-    const dataRows = jsonData.data
-    const personNameSet = new Set<string>()
-    const modeSet = new Set<string>()
-    const groupHeadSet = new Set<string>()
-    const reasonSet = new Set<string>()
+      const dataRows = jsonData.data
+      const personNameSet = new Set<string>()
+      const modeSet = new Set<string>()
+      const groupHeadSet = new Set<string>()
+      const reasonSet = new Set<string>()
 
-    for (let i = 1; i < dataRows.length; i++) {
-      const row = dataRows[i]
-      if (row[0]) personNameSet.add(String(row[0]).trim())
-      if (row[1]) modeSet.add(String(row[1]).trim())
-      if (row[2]) groupHeadSet.add(String(row[2]).trim())
-      if (row[6]) reasonSet.add(String(row[6]).trim())
+      for (let i = 1; i < dataRows.length; i++) {
+        const row = dataRows[i]
+        if (row[0]) personNameSet.add(String(row[0]).trim())
+        if (row[1]) modeSet.add(String(row[1]).trim())
+        if (row[2]) groupHeadSet.add(String(row[2]).trim())
+        if (row[6]) reasonSet.add(String(row[6]).trim())
+      }
+
+      setDropdownOptions({
+        personName: Array.from(personNameSet).filter(isNonEmptyString),
+        mode: Array.from(modeSet).filter(isNonEmptyString),
+        groupHead: Array.from(groupHeadSet).filter(isNonEmptyString),
+        reason: Array.from(reasonSet).filter(isNonEmptyString),
+      })
+    } catch (err: unknown) {
+      console.error("Error fetching dropdown data:", err)
+      setError(err instanceof Error ? err.message : "An unknown error occurred.")
+      toast({
+        title: "Error loading dropdowns",
+        description: err instanceof Error ? err.message : "An unknown error occurred.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
-
-    setDropdownOptions({
-      personName: Array.from(personNameSet).filter(isNonEmptyString),
-      mode: Array.from(modeSet).filter(isNonEmptyString),
-      groupHead: Array.from(groupHeadSet).filter(isNonEmptyString),
-      reason: Array.from(reasonSet).filter(isNonEmptyString),
-    })
-  } catch (err: unknown) {
-    console.error("Error fetching dropdown data:", err)
-    setError(err instanceof Error ? err.message : "An unknown error occurred.")
-    toast({
-      title: "Error loading dropdowns",
-      description: err instanceof Error ? err.message : "An unknown error occurred.",
-      variant: "destructive",
-    })
-  } finally {
-    setIsLoading(false)
   }
-}
 
 
   useEffect(() => {
@@ -502,7 +502,12 @@ const FormView: React.FC<FormViewProps> = ({ onAddTransaction, currentUser }) =>
 
       <Dialog open={isGroupHeadModalOpen} onOpenChange={setIsGroupHeadModalOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Add New Group Head</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Add New Group Head</DialogTitle>
+            <DialogDescription>
+              Enter a name for the new group head. This will be added to the dropdown options.
+            </DialogDescription>
+          </DialogHeader>
           <div className="py-4">
             <Label htmlFor="newGroupHead">Group Head Name</Label>
             <Input id="newGroupHead" value={newGroupHead} onChange={(e) => setNewGroupHead(e.target.value)} placeholder="Enter new group head" className="mt-1" />
@@ -518,7 +523,12 @@ const FormView: React.FC<FormViewProps> = ({ onAddTransaction, currentUser }) =>
 
       <Dialog open={isReasonModalOpen} onOpenChange={setIsReasonModalOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Add New Reason</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Add New Reason</DialogTitle>
+            <DialogDescription>
+              Enter a new reason or description for transactions.
+            </DialogDescription>
+          </DialogHeader>
           <div className="py-4">
             <Label htmlFor="newReason">Reason / Description</Label>
             <Input id="newReason" value={newReason} onChange={(e) => setNewReason(e.target.value)} placeholder="Enter new reason" className="mt-1" />
