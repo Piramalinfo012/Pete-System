@@ -206,7 +206,7 @@ const RequestView: React.FC<RequestViewProps> = ({ currentUser }) => {
       }
 
       const now = new Date()
-      const timestamp = now.toLocaleString("en-GB") // DD/MM/YYYY, HH:MM:SS
+      const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
 
       // Sequential Request No Logic
       let nextNum = 1

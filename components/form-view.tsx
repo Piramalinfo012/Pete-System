@@ -299,7 +299,7 @@ const FormView: React.FC<FormViewProps> = ({ onAddTransaction, currentUser }) =>
       }
 
       const currentDateTime = new Date()
-      const formattedTimestamp = `${String(currentDateTime.getDate()).padStart(2, "0")}/${String(currentDateTime.getMonth() + 1).padStart(2, "0")}/${currentDateTime.getFullYear()} ${String(currentDateTime.getHours()).padStart(2, "0")}:${String(currentDateTime.getMinutes()).padStart(2, "0")}:${String(currentDateTime.getSeconds()).padStart(2, "0")}`
+      const formattedTimestamp = `${currentDateTime.getFullYear()}-${String(currentDateTime.getMonth() + 1).padStart(2, '0')}-${String(currentDateTime.getDate()).padStart(2, '0')} ${String(currentDateTime.getHours()).padStart(2, '0')}:${String(currentDateTime.getMinutes()).padStart(2, '0')}:${String(currentDateTime.getSeconds()).padStart(2, '0')}`
       const monthName = currentDateTime.toLocaleDateString("en-US", { year: "numeric", month: "long" })
 
       const rowDataArray = [
