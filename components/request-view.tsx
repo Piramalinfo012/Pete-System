@@ -1,13 +1,15 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import {
   ClipboardList,
   Plus,
   Loader2,
   ExternalLink,
   FileText,
-  Search
+  Search,
+  Image,
+  ChevronDown,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -90,6 +92,23 @@ const RequestView: React.FC<RequestViewProps> = ({ currentUser }) => {
 
   // Options for dropdowns (could be fetched from Master)
   const [groupHeads, setGroupHeads] = useState<string[]>([])
+  const [departments, setDepartments] = useState<string[]>([])
+
+  // Custom dropdown state
+  const [isDeptListOpen, setIsDeptListOpen] = useState(false)
+  const deptRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (deptRef.current && !deptRef.current.contains(event.target as Node)) {
+        setIsDeptListOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
 
   const fetchRequests = async () => {
     setIsLoading(true)
@@ -114,7 +133,12 @@ const RequestView: React.FC<RequestViewProps> = ({ currentUser }) => {
           }))
           .filter((req: RequestEntry) => req.requestNo) // Only valid entries
         // Sort by timestamp desc
-        parsedRequests.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        // Sort by requestNo ascending (Sequential)
+        parsedRequests.sort((a, b) => {
+          const numA = parseInt(a.requestNo.replace("REQ-", "") || "0", 10)
+          const numB = parseInt(b.requestNo.replace("REQ-", "") || "0", 10)
+          return numA - numB
+        })
         setRequests(parsedRequests)
       }
     } catch (error) {
@@ -136,7 +160,9 @@ const RequestView: React.FC<RequestViewProps> = ({ currentUser }) => {
       if (jsonData.success && jsonData.data) {
         const rows = jsonData.data.slice(1)
         const heads = Array.from(new Set(rows.map((row: any) => row[2]).filter(Boolean))) as string[]
+        const depts = Array.from(new Set(rows.map((row: any) => row[8]).filter(Boolean))) as string[]
         setGroupHeads(heads)
+        setDepartments(depts)
       }
     } catch (error) {
       console.error("Error fetching master data:", error)
@@ -362,7 +388,7 @@ const RequestView: React.FC<RequestViewProps> = ({ currentUser }) => {
                       <TableCell className="text-center">
                         {req.attachment ? (
                           <a href={req.attachment} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline inline-flex items-center gap-1">
-                            <ExternalLink className="h-4 w-4" />
+                            <Image className="h-6 w-6" />
                           </a>
                         ) : (
                           <span className="text-slate-300">--</span>
@@ -428,15 +454,52 @@ const RequestView: React.FC<RequestViewProps> = ({ currentUser }) => {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2" ref={deptRef}>
               <Label htmlFor="department">Department</Label>
-              <Input
-                id="department"
-                name="department"
-                placeholder="Your department"
-                value={formData.department}
-                onChange={handleInputChange}
-              />
+              <div className="relative">
+                <Input
+                  id="department"
+                  name="department"
+                  placeholder="Select or enter department"
+                  value={formData.department}
+                  onChange={(e) => {
+                    handleInputChange(e)
+                    setIsDeptListOpen(true)
+                  }}
+                  onFocus={() => setIsDeptListOpen(true)}
+                  className="pr-10" // Make room for the icon
+                  autoComplete="off"
+                />
+                <div
+                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-slate-400"
+                  onClick={() => setIsDeptListOpen(!isDeptListOpen)}
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </div>
+
+                {isDeptListOpen && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {departments.filter(d => d.toLowerCase().includes(formData.department.toLowerCase())).length > 0 ? (
+                      departments
+                        .filter(d => d.toLowerCase().includes(formData.department.toLowerCase()))
+                        .map((dept) => (
+                          <div
+                            key={dept}
+                            className="px-4 py-2 text-sm text-slate-700 hover:bg-purple-50 hover:text-purple-700 cursor-pointer transition-colors"
+                            onClick={() => {
+                              handleSelectChange("department", dept)
+                              setIsDeptListOpen(false)
+                            }}
+                          >
+                            {dept}
+                          </div>
+                        ))
+                    ) : (
+                      formData.department && <div className="px-4 py-2 text-sm text-slate-400 italic">No matching departments</div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2 md:col-span-2">

@@ -9,6 +9,7 @@ import {
     Search,
     Clock,
     History,
+    Image,
     Send
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
+import { AppUser } from "@/components/login-page"
 
 // --- Interfaces ---
 interface RequestEntry {
@@ -170,7 +172,7 @@ const RequestTable = ({
                                 <TableCell className="text-center">
                                     {req.attachment ? (
                                         <a href={req.attachment} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline inline-flex items-center gap-1">
-                                            <ExternalLink className="h-4 w-4" />
+                                            <Image className="h-6 w-6" />
                                         </a>
                                     ) : (
                                         <span className="text-slate-300">--</span>
@@ -193,7 +195,11 @@ const RequestTable = ({
     </div>
 )
 
-const ApprovalView: React.FC = () => {
+interface ApprovalViewProps {
+    currentUser: AppUser
+}
+
+const ApprovalView: React.FC<ApprovalViewProps> = ({ currentUser }) => {
     const { toast } = useToast()
 
     // State for data
@@ -237,7 +243,12 @@ const ApprovalView: React.FC = () => {
                     .filter((req: RequestEntry) => req.requestNo)
 
                 // Sort by timestamp desc
-                parsedRequests.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                // Sort by requestNo ascending (Sequential)
+                parsedRequests.sort((a, b) => {
+                    const numA = parseInt(a.requestNo.replace("REQ-", "") || "0", 10)
+                    const numB = parseInt(b.requestNo.replace("REQ-", "") || "0", 10)
+                    return numA - numB
+                })
                 setRequests(parsedRequests)
 
                 // Initialize inputs

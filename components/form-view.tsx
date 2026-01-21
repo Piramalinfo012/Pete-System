@@ -299,13 +299,21 @@ const FormView: React.FC<FormViewProps> = ({ onAddTransaction, currentUser }) =>
       }
 
       const currentDateTime = new Date()
-      const formattedTimestamp = `${currentDateTime.getFullYear()}-${String(currentDateTime.getMonth() + 1).padStart(2, '0')}-${String(currentDateTime.getDate()).padStart(2, '0')} ${String(currentDateTime.getHours()).padStart(2, '0')}:${String(currentDateTime.getMinutes()).padStart(2, '0')}:${String(currentDateTime.getSeconds()).padStart(2, '0')}`
+      const formattedTimestamp = `${String(currentDateTime.getDate()).padStart(2, '0')}/${String(currentDateTime.getMonth() + 1).padStart(2, '0')}/${currentDateTime.getFullYear()} ${String(currentDateTime.getHours()).padStart(2, '0')}:${String(currentDateTime.getMinutes()).padStart(2, '0')}:${String(currentDateTime.getSeconds()).padStart(2, '0')}`
       const monthName = currentDateTime.toLocaleDateString("en-US", { year: "numeric", month: "long" })
+
+      // Convert date from yyyy-mm-dd to dd/mm/yyyy format
+      const formatDateToDDMMYYYY = (dateString: string) => {
+        const [year, month, day] = dateString.split('-');
+        return `${day}/${month}/${year}`;
+      };
+
+      const formattedDate = formatDateToDDMMYYYY(formData.date);
 
       const rowDataArray = [
         formattedTimestamp,
         formData.personName,
-        formData.date,
+        formattedDate, // Use the formatted date here
         Number.parseFloat(formData.incoming) || 0,
         Number.parseFloat(formData.outgoing) || 0,
         formData.mode,

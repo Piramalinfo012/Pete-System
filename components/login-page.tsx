@@ -88,7 +88,7 @@ const LoginPage: React.FC<{ onLogin: (user: AppUser) => void }> = ({
         }
 
         const rows = jsonData.data;
-        const allPossiblePages = ["dashboard", "request", "approval", "form", "receiving", "reports", "settings", "admin_panel"];
+        const allPossiblePages = ["dashboard", "request", "approval", "form", "reports", "settings", "admin_panel"];
         const pageNameMapping: { [key: string]: string } = {
           'dashboard': 'dashboard',
           'request': 'request',
@@ -96,8 +96,6 @@ const LoginPage: React.FC<{ onLogin: (user: AppUser) => void }> = ({
           'received': 'form',
           'add entry': 'form',
           'form': 'form',
-          'receive entry': 'receiving',
-          'receiving': 'receiving',
           'reports': 'reports'
         };
 
