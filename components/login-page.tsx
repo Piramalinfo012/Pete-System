@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 // --- TYPE DEFINITIONS (No changes to logic) ---
 export interface AppUser {
@@ -64,6 +64,7 @@ const LoginPage: React.FC<{ onLogin: (user: AppUser) => void }> = ({
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showpassword, setShowPassword] = useState(false);
   const [users, setUsers] = useState<AppUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -88,37 +89,48 @@ const LoginPage: React.FC<{ onLogin: (user: AppUser) => void }> = ({
         }
 
         const rows = jsonData.data;
-        const allPossiblePages = ["dashboard", "request", "approval", "form", "reports", "settings", "admin_panel"];
+        // Define all possible pages for admin
+        const allPossiblePages = ["dashboard", "request", "approval", "form", "reports", "users"];
+
+        // Mapping for specific page names from the sheet to internal route keys
         const pageNameMapping: { [key: string]: string } = {
           'dashboard': 'dashboard',
           'request': 'request',
           'approval': 'approval',
-          'received': 'form',
-          'add entry': 'form',
-          'form': 'form',
-          'reports': 'reports'
+          'add new transaction': 'form', // Maps "add new transaction" to "form"
+          'reports': 'reports',
+          'repots': 'reports', // Handle typo from sheet
         };
 
         const fetchedUsers: AppUser[] = rows
           .slice(1)
           .map((row: any) => {
-            const id = row[1];
-            const pass = row[2];
-            const role = row[3];
-            const pagesString = row[4];
+            const id = row[1]; // Column B (index 1) - Username
+            const pass = row[2]; // Column C (index 2) - Password (assumed)
+            const role = row[3]; // Column D (index 3) - Role
+            const pagesString = row[4]; // Column E (index 4) - Pages
+
             const userRole = role ? String(role).toLowerCase().trim() : "user";
             let pages: string[] = [];
-            if (userRole === "admin" || (pagesString && pagesString.toLowerCase().trim() === "all")) {
+
+            if (userRole === "admin") {
+              // If admin, show all pages
               pages = allPossiblePages;
-            } else if (pagesString) {
-              pages = pagesString
-                .split(",")
-                .map((p: string) => pageNameMapping[p.trim().toLowerCase()])
-                .filter(Boolean)
-                .filter(
-                  (v: string, i: number, s: string[]) => s.indexOf(v) === i
-                );
+            } else if (userRole === "user") {
+              // If user, parse the comma-separated pages from Column E
+              if (pagesString) {
+                pages = pagesString
+                  .split(",")
+                  .map((p: string) => {
+                    const params = p.trim().toLowerCase();
+                    // Check if the exact param is in our mapping
+                    return pageNameMapping[params];
+                  })
+                  .filter(Boolean) // Remove undefined/null mappings
+                  .filter((v: string, i: number, s: string[]) => s.indexOf(v) === i); // Deduplicate
+              }
             }
+
             return {
               id: id ? String(id).trim() : "",
               name: id ? String(id).trim() : "",
@@ -164,7 +176,7 @@ const LoginPage: React.FC<{ onLogin: (user: AppUser) => void }> = ({
         <Card className="bg-white/95 backdrop-blur-sm border-slate-200/60 shadow-2xl shadow-purple-300/50 rounded-2xl">
           <CardHeader className="text-center pt-12 pb-10">
             <CardTitle className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-              Pete App
+              Pete System
             </CardTitle>
           </CardHeader>
           <CardContent className="px-12 pb-12 pt-4">
@@ -200,15 +212,26 @@ const LoginPage: React.FC<{ onLogin: (user: AppUser) => void }> = ({
                     <LockIcon className="text-purple-500" />
                     Password
                   </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="bg-slate-50/50 border-slate-300 h-12 text-base focus:border-purple-400 focus:ring-purple-400/50"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showpassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="bg-slate-50/50 border-slate-300 h-12 text-base focus:border-purple-400 focus:ring-purple-400/50 pr-10"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowPassword(!showpassword)}
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-slate-400 hover:text-purple-600"
+                    >
+                      {showpassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </Button>
+                  </div>
                 </div>
                 {error && (
                   <p className="text-sm text-red-500 text-center pt-1">

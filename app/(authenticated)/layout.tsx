@@ -24,6 +24,7 @@ import {
     CheckCircle2,
     FilePlus,
     BarChart3,
+    User,
 } from "lucide-react";
 
 const pageIcons: { [key: string]: React.ElementType } = {
@@ -32,6 +33,7 @@ const pageIcons: { [key: string]: React.ElementType } = {
     approval: CheckCircle2,
     form: FilePlus,
     reports: BarChart3,
+    users: User,
 };
 
 const pageLabels: { [key: string]: string } = {
@@ -40,6 +42,7 @@ const pageLabels: { [key: string]: string } = {
     approval: "Approval",
     form: "Add New Transaction",
     reports: "Reports",
+    users: "User Management",
 };
 
 const pageRoutes: { [key: string]: string } = {
@@ -48,6 +51,7 @@ const pageRoutes: { [key: string]: string } = {
     approval: "/approval",
     form: "/form",
     reports: "/reports",
+    users: "/users",
 };
 
 const SIDEBAR_ORDER = [
@@ -56,6 +60,7 @@ const SIDEBAR_ORDER = [
     "request",
     "approval",
     "reports",
+    "users",
 ];
 
 export default function AuthenticatedLayout({
@@ -107,7 +112,7 @@ export default function AuthenticatedLayout({
                 <SidebarContent className="p-4">
                     <SidebarMenu className="flex flex-col gap-2">
                         {SIDEBAR_ORDER.filter(
-                            (page) => currentUser.pages.includes(page) // Check access
+                            (page) => currentUser.role === 'admin' || currentUser.pages.includes(page) // Check access
                         ).map((page) => {
                             const Icon = pageIcons[page] || LayoutDashboard;
                             const route = pageRoutes[page];
