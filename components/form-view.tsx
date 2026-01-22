@@ -42,7 +42,7 @@ interface FormViewProps {
 
 // --- Constants ---
 const APP_SCRIPT_URL =
-  "https://script.google.com/a/macros/piramalpetroleum.com/s/AKfycbwJn_U3Js50o2YdBN9DFaErLYXKWEDluUf1JjQJGet7d_TN7-O8ZaRWU3bxnf_nc7jAGw/exec"
+  "https://script.google.com/macros/s/AKfycbwJn_U3Js50o2YdBN9DFaErLYXKWEDluUf1JjQJGet7d_TN7-O8ZaRWU3bxnf_nc7jAGw/exec"
 const GOOGLE_DRIVE_FOLDER_ID = "1RKUNn_iSYtxfBVTtiPs406cULtj9-J5l"
 const PUBLIC_SHEET_ID = "1FQwLNqZMJHttaOQnI6Xna5nghHOgQXyWOUfGLAfsfko"
 const PUBLIC_SHEET_MASTER_NAME = "Master"
@@ -88,11 +88,8 @@ const FormView: React.FC<FormViewProps> = ({ onAddTransaction, currentUser }) =>
     setIsLoading(true)
     setError(null)
 
-    const appScriptUrl =
-      "https://script.google.com/macros/s/AKfycbwJn_U3Js50o2YdBN9DFaErLYXKWEDluUf1JjQJGet7d_TN7-O8ZaRWU3bxnf_nc7jAGw/exec"
-
     try {
-      const response = await fetch(`${appScriptUrl}?sheet=${PUBLIC_SHEET_MASTER_NAME}&action=fetch`)
+      const response = await fetch(`${APP_SCRIPT_URL}?sheet=${PUBLIC_SHEET_MASTER_NAME}&action=fetch`)
       if (!response.ok)
         throw new Error(`Failed to fetch dropdown data: ${response.status} - ${response.statusText}`)
 
@@ -153,39 +150,41 @@ const FormView: React.FC<FormViewProps> = ({ onAddTransaction, currentUser }) =>
 
     setAdding(true)
     try {
-      const url = `https://docs.google.com/spreadsheets/d/${PUBLIC_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(PUBLIC_SHEET_MASTER_NAME)}`
-      const response = await fetch(url)
+      // Use App Script proxy instead of direct gviz to avoid CORS and auth issues
+      const response = await fetch(`${APP_SCRIPT_URL}?sheet=${PUBLIC_SHEET_MASTER_NAME}&action=fetch`)
+
       if (!response.ok) {
         throw new Error(`Failed to fetch sheet data: ${response.status}`)
       }
 
-      let text = await response.text()
-      text = text.substring(text.indexOf("(") + 1, text.lastIndexOf(")"))
-      const jsonData = JSON.parse(text)
+      const result = await response.json()
 
-      if (!jsonData.table || !jsonData.table.rows) {
-        throw new Error("Sheet data is not in the expected format.")
+      if (!result.success || !result.data) {
+        throw new Error("Failed to fetch data from App Script")
       }
 
-      const dataRows = jsonData.table.rows
-      let lastRowWithDataInColumn = 1
+      const dataRows = result.data // 2D array: [row][col] (Row 0 is header)
+      let lastRowWithDataInColumn = 0
 
-      for (let i = 1; i < dataRows.length; i++) {
-        const row = dataRows[i]
-        if (row.c && row.c[columnIndex] && row.c[columnIndex].v != null && String(row.c[columnIndex].v).trim() !== "") {
+      for (let i = 0; i < dataRows.length; i++) {
+        const cellValue = dataRows[i][columnIndex]
+        if (cellValue !== null && cellValue !== undefined && String(cellValue).trim() !== "") {
           lastRowWithDataInColumn = i
         }
       }
 
       const targetRowIndex = lastRowWithDataInColumn + 1
-      const targetRowNumber = targetRowIndex + 1
+      const targetRowNumber = targetRowIndex + 1 // Sheet rows are 1-indexed
 
       let existingRowData: (string | number)[] = []
       const maxColumns = Math.max(GROUP_HEAD_COLUMN_INDEX, REASON_COLUMN_INDEX) + 1
-      if (targetRowIndex < dataRows.length && dataRows[targetRowIndex]) {
+
+      // If the target row exists in the data range, preserve its other columns
+      if (targetRowIndex < dataRows.length) {
         const existingRow = dataRows[targetRowIndex]
         for (let i = 0; i < maxColumns; i++) {
-          existingRowData[i] = (existingRow.c && existingRow.c[i] && existingRow.c[i].v != null) ? String(existingRow.c[i].v) : ""
+          const val = existingRow[i]
+          existingRowData[i] = (val !== null && val !== undefined) ? String(val) : ""
         }
       } else {
         existingRowData = Array(maxColumns).fill("")
@@ -206,8 +205,8 @@ const FormView: React.FC<FormViewProps> = ({ onAddTransaction, currentUser }) =>
         body: requestBody,
       })
 
-      const result = await updateResponse.json()
-      if (result.success) {
+      const updateResult = await updateResponse.json()
+      if (updateResult.success) {
         toast({
           title: "Success",
           description: `${optionType} "${newValue.trim()}" added successfully.`,
@@ -216,7 +215,7 @@ const FormView: React.FC<FormViewProps> = ({ onAddTransaction, currentUser }) =>
         setModalOpen(false)
         await fetchDropdownOptions()
       } else {
-        throw new Error(result.error || `Failed to add ${optionType}.`)
+        throw new Error(updateResult.error || `Failed to add ${optionType}.`)
       }
     } catch (err: unknown) {
       console.error(`Error adding ${optionType}:`, err)

@@ -112,7 +112,12 @@ export default function UserManagementPage() {
                     username: row[1] || "",
                     password: row[2] || "",
                     role: (row[3]?.toString().toLowerCase() === "admin" ? "admin" : "user"),
-                    pages: row[4] ? row[4].toString().split(",").map((p: string) => p.trim()) : [],
+                    pages: row[4] ? row[4].toString().split(",").map((p: string) => {
+                        const trimmed = p.trim();
+                        // Case-insensitive match to AVAILABLE_PAGES to ensure checkboxes work
+                        const matched = AVAILABLE_PAGES.find(ap => ap.toLowerCase() === trimmed.toLowerCase());
+                        return matched || trimmed;
+                    }).filter(Boolean) : [],
                     isDeleted: row[5] ? true : false, // Column F (index 5)
                 }));
                 // Filter out deleted users
@@ -218,7 +223,9 @@ export default function UserManagementPage() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            const pagesString = formData.pages.join(", ");
+            // Deduplicate pages before submitting
+            const uniquePages = Array.from(new Set(formData.pages));
+            const pagesString = uniquePages.join(", ");
 
             // Prepare row data: [Name, Username, Password, Role, Pages]
             const rowData = [

@@ -109,6 +109,17 @@ const LoginPage: React.FC<{ onLogin: (user: AppUser) => void }> = ({
             const pass = row[2]; // Column C (index 2) - Password (assumed)
             const role = row[3]; // Column D (index 3) - Role
             const pagesString = row[4]; // Column E (index 4) - Pages
+            const status = row[5]; // Column F (index 5) - Status
+
+            // Check if user is deleted
+            if (status && String(status).trim().toLowerCase() === "deleted") {
+              return {
+                id: "",
+                name: "",
+                role: "user" as const,
+                pages: [],
+              };
+            }
 
             const userRole = role ? String(role).toLowerCase().trim() : "user";
             let pages: string[] = [];
