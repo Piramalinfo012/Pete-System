@@ -16,7 +16,7 @@ import {
     SidebarTrigger,
     SidebarInset,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
 import {
     LogOut,
     LayoutDashboard,
@@ -94,11 +94,13 @@ export default function AuthenticatedLayout({
             <Sidebar className="bg-white border-r border-slate-200">
                 <SidebarHeader className="p-6 border-b border-slate-200">
                     <div className="flex items-center gap-4">
-                        <Avatar className="h-12 w-12">
-                            <AvatarFallback className="bg-purple-100 text-purple-700 font-bold text-lg">
-                                {userInitial}
-                            </AvatarFallback>
-                        </Avatar>
+                        <div className="h-12 w-12 relative overflow-hidden rounded-full">
+                            <img
+                                src="/PPPl Logo.png"
+                                alt="Logo"
+                                className="h-full w-full object-cover"
+                            />
+                        </div>
                         <div className="flex flex-col">
                             <span className="text-lg font-bold text-slate-800">
                                 {currentUser.name}

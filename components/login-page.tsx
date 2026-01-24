@@ -186,6 +186,15 @@ const LoginPage: React.FC<{ onLogin: (user: AppUser) => void }> = ({
       <div className="w-full max-w-xl">
         <Card className="bg-white/95 backdrop-blur-sm border-slate-200/60 shadow-2xl shadow-purple-300/50 rounded-2xl">
           <CardHeader className="text-center pt-12 pb-10">
+            <div className="flex justify-center mb-6">
+              <div className="h-24 w-24 relative overflow-hidden rounded-full shadow-lg border-4 border-white/50">
+                <img
+                  src="/PPPl Logo.png"
+                  alt="Logo"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </div>
             <CardTitle className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
               Pete System
             </CardTitle>
