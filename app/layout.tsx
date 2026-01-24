@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: 'Pete System',
   description: 'Created by botivate.ai',
   generator: 'botivate',
+  icons: {
+    icon: '/PPPl Logo.png',
+  },
 }
 
 export default function RootLayout({
