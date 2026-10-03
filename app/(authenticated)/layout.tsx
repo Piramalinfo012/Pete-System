@@ -94,18 +94,18 @@ export default function AuthenticatedLayout({
             <Sidebar className="bg-white border-r border-slate-200">
                 <SidebarHeader className="p-6 border-b border-slate-200">
                     <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 relative overflow-hidden rounded-full">
+                        <div className="h-12 w-12 relative overflow-hidden rounded-full ring-2 ring-purple-500/20 shadow-sm flex-shrink-0">
                             <img
                                 src="/PPPl Logo.png"
                                 alt="Logo"
                                 className="h-full w-full object-cover"
                             />
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-lg font-bold text-slate-800">
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-base font-bold text-slate-800 truncate">
                                 {currentUser.name}
                             </span>
-                            <span className="text-sm text-slate-500 capitalize">
+                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 w-fit capitalize mt-0.5">
                                 {currentUser.role}
                             </span>
                         </div>
@@ -114,7 +114,7 @@ export default function AuthenticatedLayout({
                 <SidebarContent className="p-4">
                     <SidebarMenu className="flex flex-col gap-2">
                         {SIDEBAR_ORDER.filter(
-                            (page) => currentUser.role === 'admin' || currentUser.pages.includes(page) // Check access
+                            (page) => currentUser.role === 'admin' || currentUser.pages?.includes(page) // Check access
                         ).map((page) => {
                             const Icon = pageIcons[page] || LayoutDashboard;
                             const route = pageRoutes[page];
@@ -128,10 +128,10 @@ export default function AuthenticatedLayout({
                                         size="lg"
                                         isActive={isActive}
                                         tooltip={pageLabels[page]}
-                                        className="group text-slate-600 hover:bg-purple-50 hover:text-purple-700 data-[active=true]:bg-purple-100 data-[active=true]:text-purple-700 data-[active=true]:font-bold gap-4"
+                                        className="group text-slate-600 hover:bg-purple-50/80 hover:text-purple-700 rounded-xl data-[active=true]:bg-gradient-to-r data-[active=true]:from-purple-600 data-[active=true]:to-indigo-600 data-[active=true]:text-white data-[active=true]:shadow-md data-[active=true]:shadow-purple-500/25 data-[active=true]:font-bold gap-4 transition-all"
                                     >
                                         <Link href={route}>
-                                            <Icon className="size-5 text-slate-500 group-hover:text-purple-700 data-[active=true]:text-purple-700" />
+                                            <Icon className="size-5 text-slate-500 group-hover:text-purple-700 group-data-[active=true]:text-white transition-colors" />
                                             <span className="text-base">{pageLabels[page]}</span>
                                         </Link>
                                     </SidebarMenuButton>
@@ -143,15 +143,10 @@ export default function AuthenticatedLayout({
                 <SidebarFooter className="p-4 mt-auto">
                     <div className="my-2 py-3 text-center border-t border-slate-200">
                         <p className="text-xs text-slate-500">
-                            Powered by{" "}
-                            <a
-                                href="https://www.botivate.in/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="font-semibold text-purple-600 hover:underline"
-                            >
-                                Botivate
-                            </a>
+                            Developed By{" "}
+                            <span className="font-semibold text-purple-600">
+                                Deepak Sahu
+                            </span>
                         </p>
                     </div>
                     <SidebarMenu>

@@ -4,8 +4,8 @@ import { AuthProvider } from '@/components/auth-context'
 
 export const metadata: Metadata = {
   title: 'Pete System',
-  description: 'Created by botivate.ai',
-  generator: 'botivate',
+  description: 'Developed By Deepak Sahu',
+  generator: 'Deepak Sahu',
   icons: {
     icon: '/PPPl Logo.png',
   },

@@ -23,6 +23,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (storedUser) {
             try {
                 const user = JSON.parse(storedUser);
+                if (user && !user.pages) {
+                    user.pages = [];
+                }
                 setCurrentUser(user);
             } catch (e) {
                 console.error("Failed to parse user from local storage", e);

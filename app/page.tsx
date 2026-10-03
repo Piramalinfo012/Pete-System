@@ -16,9 +16,10 @@ export default function Page() {
             router.push("/login"); // Redirect to login if not authenticated
         } else {
             // Determine initial view based on user permissions
-            const initialView = currentUser.pages.includes("dashboard")
+            const pages = currentUser.pages || [];
+            const initialView = pages.includes("dashboard")
                 ? "dashboard"
-                : currentUser.pages[0] || "dashboard";
+                : pages[0] || "dashboard";
 
             const routeMap: { [key: string]: string } = {
                 dashboard: "/dashboard",

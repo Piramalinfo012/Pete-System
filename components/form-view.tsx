@@ -1,13 +1,13 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { FileText, Loader2, PlusCircle } from "lucide-react"
+import { FileText, Loader2, PlusCircle, Camera, Image as ImageIcon, Clipboard, X, CheckCircle2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 
@@ -67,6 +67,9 @@ const FormView: React.FC<FormViewProps> = ({ onAddTransaction, currentUser }) =>
 
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [fileInputKey, setFileInputKey] = useState(Date.now())
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
   const [dropdownOptions, setDropdownOptions] = useState<DropdownOptions>({
     personName: [],
     mode: [],
@@ -235,10 +238,85 @@ const FormView: React.FC<FormViewProps> = ({ onAddTransaction, currentUser }) =>
     setFileInputKey(Date.now())
   }, [currentUser])
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) setPhotoFile(e.target.files[0])
-    else setPhotoFile(null)
+  useEffect(() => {
+    if (!photoFile) {
+      setPreviewUrl(null)
+      return
+    }
+    const objectUrl = URL.createObjectURL(photoFile)
+    setPreviewUrl(objectUrl)
+    return () => URL.revokeObjectURL(objectUrl)
+  }, [photoFile])
+
+  const handleFileSelection = (file: File | null) => {
+    if (!file) {
+      setPhotoFile(null)
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Image size exceeds 10MB limit.",
+        variant: "destructive",
+      })
+      return
+    }
+    setPhotoFile(file)
   }
+
+  const handlePasteClick = async () => {
+    try {
+      if (!navigator.clipboard?.read) {
+        toast({
+          title: "Paste Image",
+          description: "Press Ctrl+V or Command+V to paste an image directly.",
+        })
+        return
+      }
+      const clipboardItems = await navigator.clipboard.read()
+      for (const item of clipboardItems) {
+        const imageType = item.types.find((type) => type.startsWith("image/"))
+        if (imageType) {
+          const blob = await item.getType(imageType)
+          const file = new File([blob], `pasted_image_${Date.now()}.${imageType.split("/")[1] || "png"}`, { type: imageType })
+          handleFileSelection(file)
+          toast({
+            title: "Image Pasted",
+            description: "Image attached successfully.",
+          })
+          return
+        }
+      }
+      toast({
+        title: "No Image in Clipboard",
+        description: "Copy an image first, then click Paste or press Ctrl+V.",
+        variant: "destructive",
+      })
+    } catch (err) {
+      console.error("Paste error:", err)
+      toast({
+        title: "Clipboard Access",
+        description: "Clipboard access was blocked. You can press Ctrl+V to paste.",
+      })
+    }
+  }
+
+  useEffect(() => {
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+      if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length > 0) {
+        const file = e.clipboardData.files[0]
+        if (file.type.startsWith("image/")) {
+          handleFileSelection(file)
+          toast({
+            title: "Image Attached",
+            description: `Pasted: ${file.name || "image.png"}`,
+          })
+        }
+      }
+    }
+    window.addEventListener("paste", handleGlobalPaste)
+    return () => window.removeEventListener("paste", handleGlobalPaste)
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -493,9 +571,104 @@ const FormView: React.FC<FormViewProps> = ({ onAddTransaction, currentUser }) =>
               </div>
             </div>
 
-            <div className="space-y-2 md:col-span-2">
-              <Label className="text-slate-700 font-medium">Photo (Optional)</Label>
-              <Input key={fileInputKey} type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
+            <div className="space-y-3 md:col-span-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">UPLOAD IMAGE</h4>
+                  <p className="text-[11px] text-slate-400">Max 10MB</p>
+                </div>
+                {photoFile && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setPhotoFile(null)
+                      setFileInputKey(Date.now())
+                    }}
+                    className="h-7 px-2 text-xs text-red-500 hover:bg-red-50 hover:text-red-700"
+                  >
+                    <X className="mr-1 h-3.5 w-3.5" /> Remove
+                  </Button>
+                )}
+              </div>
+
+              {/* Hidden Inputs */}
+              <input
+                key={`camera-${fileInputKey}`}
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) handleFileSelection(e.target.files[0])
+                }}
+              />
+              <input
+                key={`gallery-${fileInputKey}`}
+                ref={galleryInputRef}
+                type="file"
+                accept="image/*,application/pdf"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) handleFileSelection(e.target.files[0])
+                }}
+              />
+
+              {/* Upload Option Buttons */}
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="flex h-20 w-20 flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-purple-400 transition-all hover:border-purple-300 hover:bg-purple-50/40 hover:text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-400/20 active:scale-95"
+                >
+                  <Camera className="h-6 w-6 stroke-[1.5]" />
+                  <span className="mt-1 text-xs font-normal">Camera</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="flex h-20 w-20 flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-purple-400 transition-all hover:border-purple-300 hover:bg-purple-50/40 hover:text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-400/20 active:scale-95"
+                >
+                  <ImageIcon className="h-6 w-6 stroke-[1.5]" />
+                  <span className="mt-1 text-xs font-normal">Gallery</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePasteClick}
+                  className="flex h-20 w-20 flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-purple-400 transition-all hover:border-purple-300 hover:bg-purple-50/40 hover:text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-400/20 active:scale-95"
+                >
+                  <Clipboard className="h-6 w-6 stroke-[1.5]" />
+                  <span className="mt-1 text-xs font-normal">Paste</span>
+                </button>
+              </div>
+
+              {/* Selected Image Info */}
+              {photoFile && (
+                <div className="flex items-center gap-3 rounded-xl border border-purple-200 bg-purple-50/50 p-2.5">
+                  {previewUrl ? (
+                    <img
+                      src={previewUrl}
+                      alt="Uploaded preview"
+                      className="h-12 w-12 flex-shrink-0 rounded-lg border border-purple-200 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
+                      <FileText className="h-6 w-6" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-slate-800">{photoFile.name}</p>
+                    <p className="text-[11px] text-slate-500">
+                      {(photoFile.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-emerald-600" />
+                </div>
+              )}
             </div>
 
             <div className="md:col-span-2">

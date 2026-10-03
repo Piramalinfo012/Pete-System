@@ -275,15 +275,7 @@ const LoginPage: React.FC<{ onLogin: (user: AppUser) => void }> = ({
         </Card>
       </div>
       <footer className="fixed bottom-0 w-full py-3 text-center text-sm text-white bg-gradient-to-r from-blue-500 to-purple-600">
-        Powered by{" "}
-        <a
-          href="https://www.botivate.in/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-semibold hover:underline"
-        >
-          Botivate
-        </a>
+        Developed By <span className="font-semibold">Deepak Sahu</span>
       </footer>
     </div>
   );
