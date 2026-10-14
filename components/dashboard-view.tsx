@@ -444,7 +444,7 @@ function DashboardView({ currentUser }: { currentUser: AppUser }) {
 
   const availableMonths = useMemo(() => {
     const monthsMap = new Map<string, string>();
-    allTransactions.forEach((t) => {
+    filteredTransactions.forEach((t) => {
       if (t.date && t.date.length >= 7) {
         const ym = t.date.substring(0, 7);
         if (!monthsMap.has(ym)) {
@@ -453,13 +453,18 @@ function DashboardView({ currentUser }: { currentUser: AppUser }) {
       }
     });
     return Array.from(monthsMap.entries()).sort((a, b) => b[0].localeCompare(a[0]));
-  }, [allTransactions]);
+  }, [filteredTransactions]);
+
+  // Reset the export month if it falls outside the currently filtered data
+  useEffect(() => {
+    if (exportMonth !== "all" && !availableMonths.some(([ym]) => ym === exportMonth)) {
+      setExportMonth("all");
+    }
+  }, [availableMonths, exportMonth]);
 
   const exportPreviewData = useMemo(() => {
-    let userTransactions =
-      currentUser.role === "admin"
-        ? allTransactions
-        : allTransactions.filter((t) => t.personName === currentUser.name);
+    // Respect the dashboard Smart Filters (date, person, mode, reason, group head)
+    let userTransactions = filteredTransactions;
 
     if (exportMonth !== "all") {
       userTransactions = userTransactions.filter((t) => t.date.startsWith(exportMonth));
@@ -492,13 +497,11 @@ function DashboardView({ currentUser }: { currentUser: AppUser }) {
       .sort((a, b) => b.total - a.total);
 
     return { list, totalExpense };
-  }, [allTransactions, exportMonth, exportGroupHead, currentUser]);
+  }, [filteredTransactions, exportMonth, exportGroupHead]);
 
   const handleDownloadExcel = () => {
-    let userTransactions =
-      currentUser.role === "admin"
-        ? allTransactions
-        : allTransactions.filter((t) => t.personName === currentUser.name);
+    // Respect the dashboard Smart Filters (date, person, mode, reason, group head)
+    let userTransactions = filteredTransactions;
 
     if (exportMonth !== "all") {
       userTransactions = userTransactions.filter((t) => t.date.startsWith(exportMonth));
@@ -551,7 +554,7 @@ function DashboardView({ currentUser }: { currentUser: AppUser }) {
 
     // 2. Monthly Pivot Matrix
     const monthsSet = new Set<string>();
-    allTransactions.forEach((t) => {
+    filteredTransactions.forEach((t) => {
       if (t.date && t.date.length >= 7) {
         monthsSet.add(t.date.substring(0, 7));
       }
@@ -559,7 +562,7 @@ function DashboardView({ currentUser }: { currentUser: AppUser }) {
     const sortedMonths = Array.from(monthsSet).sort();
 
     const allGroupHeads = Array.from(
-      new Set(allTransactions.map((t) => t.groupHead || "Uncategorized"))
+      new Set(filteredTransactions.map((t) => t.groupHead || "Uncategorized"))
     ).filter(Boolean);
 
     const monthlyMatrixRows = allGroupHeads
@@ -568,10 +571,9 @@ function DashboardView({ currentUser }: { currentUser: AppUser }) {
         let rowTotal = 0;
         sortedMonths.forEach((m) => {
           const mLabel = formatMonthLabel(m);
-          const mExpense = allTransactions
+          const mExpense = filteredTransactions
             .filter(
               (t) =>
-                (currentUser.role === "admin" || t.personName === currentUser.name) &&
                 (t.groupHead || "Uncategorized") === gh &&
                 t.date.startsWith(m)
             )
@@ -588,12 +590,8 @@ function DashboardView({ currentUser }: { currentUser: AppUser }) {
     let grandMatrixTotal = 0;
     sortedMonths.forEach((m) => {
       const mLabel = formatMonthLabel(m);
-      const mTotal = allTransactions
-        .filter(
-          (t) =>
-            (currentUser.role === "admin" || t.personName === currentUser.name) &&
-            t.date.startsWith(m)
-        )
+      const mTotal = filteredTransactions
+        .filter((t) => t.date.startsWith(m))
         .reduce((sum, t) => sum + t.outgoing, 0);
       matrixTotalRow[mLabel] = mTotal;
       grandMatrixTotal += mTotal;
@@ -649,7 +647,11 @@ function DashboardView({ currentUser }: { currentUser: AppUser }) {
 
     const selectedMonthLabel =
       exportMonth === "all" ? "All_Months" : exportMonth.replace("-", "_");
-    const fileName = `Category_Expense_Report_${selectedMonthLabel}.xlsx`;
+    const rangeLabel =
+      filters.dateFrom || filters.dateTo
+        ? `_${filters.dateFrom || "start"}_to_${filters.dateTo || "end"}`
+        : "";
+    const fileName = `Category_Expense_Report_${selectedMonthLabel}${rangeLabel}.xlsx`;
     XLSX.writeFile(wb, fileName);
   };
 
